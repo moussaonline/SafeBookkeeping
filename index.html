@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SafeBookkeeping</title>
+<meta name="description" content="Gebruik ChatGPT of Claude voor je boekhouding zonder dat IBAN's, BSN's, e-mailadressen of telefoonnummers je computer verlaten.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;700;800&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>body{margin:0}img{max-width:100%}[hidden]{display:none!important}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}</style>
+</head>
+<body>
+<style>
+  /* Layout: smalle leeskolom, hero = live voor/na-demo van een factuur, prijzen als drie gelijke kolommen die op mobiel stapelen. */
+  :root {
+    --paper: #f5f7f9;
+    --surface: #ffffff;
+    --ink: #0e1c2b;
+    --ink-soft: #4a5a6b;
+    --line: #d5dde5;
+    --vault: #0e1c2b;      /* de "lak" waarmee gegevens worden afgeschermd */
+    --mark: #ffd23f;        /* markeerstift: placeholders */
+    --mark-ink: #2b2100;
+    --safe: #13795b;
+    --font-display: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+    --font-body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+    --radius: 10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #0b141d; --surface: #111e2b; --ink: #e6edf3; --ink-soft: #9aabbc;
+      --line: #23364a; --vault: #000000; --mark: #ffd23f; --mark-ink: #2b2100; --safe: #4fd1a5;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #0b141d; --surface: #111e2b; --ink: #e6edf3; --ink-soft: #9aabbc;
+    --line: #23364a; --vault: #000000; --mark: #ffd23f; --mark-ink: #2b2100; --safe: #4fd1a5;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper); color: var(--ink);
+    font: 16px/1.6 var(--font-body);
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  h1, h2, h3 { font-family: var(--font-display); line-height: 1.1; text-wrap: balance; margin: 0; }
+  h2 { font-size: clamp(1.7rem, 3.4vw, 2.4rem); letter-spacing: -0.02em; }
+  h3 { font-size: 1.15rem; }
+  p { margin: 0; }
+  a { color: inherit; }
+  :focus-visible { outline: 3px solid var(--mark); outline-offset: 2px; border-radius: 4px; }
+  .eyebrow {
+    font: 500 0.75rem/1 var(--font-mono); text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink-soft);
+  }
+  section { padding-block: 72px; display: grid; gap: 32px; }
+  section + section { border-top: 1px solid var(--line); }
+  .lede { color: var(--ink-soft); max-width: 62ch; font-size: 1.05rem; }
+
+  /* Nav */
+  nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 20px; flex-wrap: wrap; }
+  .logo { font: 800 1.15rem/1 var(--font-display); display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .logo i { width: 22px; height: 14px; background: var(--vault); border-radius: 2px; box-shadow: inset 0 -4px 0 var(--mark); }
+  nav ul { display: flex; gap: 24px; list-style: none; margin: 0; padding: 0; flex-wrap: wrap; }
+  nav ul a { text-decoration: none; color: var(--ink-soft); font-weight: 500; }
+  nav ul a:hover { color: var(--ink); }
+
+  /* Hero */
+  .hero { display: grid; grid-template-columns: 1.05fr 1fr; gap: 48px; align-items: center; padding-block: 48px 72px; }
+  .hero > * { min-width: 0; }
+  .hero h1 { font-size: clamp(2.3rem, 5.2vw, 3.9rem); letter-spacing: -0.035em; font-weight: 800; }
+  .hero h1 .bar {
+    background: var(--vault); color: var(--vault); border-radius: 3px; padding: 0 0.12em;
+    transition: color .5s ease, background .5s ease;
+  }
+  .hero h1:hover .bar { background: var(--mark); color: var(--mark-ink); }
+  .hero .text { display: grid; gap: 24px; }
+  .cta { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px; text-decoration: none; cursor: pointer;
+    font: 600 1rem/1 var(--font-body); padding: 14px 20px; border-radius: 8px; border: 1px solid transparent;
+  }
+  .btn.primary { background: var(--ink); color: var(--paper); }
+  .btn.ghost { border-color: var(--line); color: var(--ink); background: transparent; }
+  .note { font-size: 0.85rem; color: var(--ink-soft); }
+
+  /* Demo-factuur */
+  .doc {
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    box-shadow: 0 18px 40px -24px rgba(14, 28, 43, 0.35); overflow: hidden;
+  }
+  .doc-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  .toggle { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+  .toggle button {
+    font: 500 0.78rem/1 var(--font-mono); border: 0; background: transparent; color: var(--ink-soft);
+    padding: 7px 12px; border-radius: 999px; cursor: pointer;
+  }
+  .toggle button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  .doc pre {
+    margin: 0; padding: 20px 18px; font: 0.84rem/1.85 var(--font-mono); white-space: pre-wrap; word-break: break-word; color: var(--ink);
+  }
+  .pii { border-radius: 3px; padding: 1px 3px; transition: background .3s ease, color .3s ease; }
+  .doc[data-view="cloud"] .pii { background: var(--mark); color: var(--mark-ink); }
+  .doc-foot { padding: 12px 16px; border-top: 1px solid var(--line); font: 0.78rem/1.4 var(--font-mono); color: var(--ink-soft); }
+  .doc-foot b { color: var(--safe); font-weight: 500; }
+
+  /* Stappen */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; list-style: none; margin: 0; padding: 0; counter-reset: s; }
+  .steps li { display: grid; gap: 10px; align-content: start; counter-increment: s; min-width: 0; }
+  .steps li::before { content: "Stap " counter(s); font: 500 0.75rem/1 var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+  .steps p { color: var(--ink-soft); }
+
+  /* Wat wordt afgeschermd */
+  .types { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .type { border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; display: grid; gap: 10px; background: var(--surface); min-width: 0; }
+  .type code { font: 0.82rem/1.4 var(--font-mono); }
+  .type .ph { justify-self: start; background: var(--mark); color: var(--mark-ink); padding: 2px 6px; border-radius: 3px; font: 500 0.82rem/1.4 var(--font-mono); }
+  .type p { color: var(--ink-soft); font-size: 0.92rem; }
+  .limits { border-left: 3px solid var(--line); padding-left: 16px; color: var(--ink-soft); max-width: 70ch; }
+  .limits strong { color: var(--ink); }
+
+  /* Prijzen */
+  .price-head { display: flex; justify-content: space-between; align-items: end; gap: 24px; flex-wrap: wrap; }
+  .billing { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+  .billing button { font: 600 0.9rem/1 var(--font-body); border: 0; background: transparent; color: var(--ink-soft); padding: 10px 16px; border-radius: 999px; cursor: pointer; }
+  .billing button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  .billing small { color: var(--safe); font-weight: 600; }
+  .billing button[aria-pressed="true"] small { color: var(--mark); }
+  .plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .plan {
+    border: 1px solid var(--line); border-radius: var(--radius); padding: 28px 24px; display: grid; gap: 18px;
+    grid-template-rows: auto auto auto 1fr auto; background: var(--surface); min-width: 0;
+  }
+  .plan.featured { border: 2px solid var(--ink); }
+  .plan .tag { font: 500 0.72rem/1 var(--font-mono); text-transform: uppercase; letter-spacing: .1em; color: var(--ink-soft); min-height: 1em; }
+  .plan.featured .tag { color: var(--ink); }
+  .amount { display: flex; align-items: baseline; gap: 6px; font-variant-numeric: tabular-nums; }
+  .amount strong { font: 800 2.6rem/1 var(--font-display); letter-spacing: -0.03em; }
+  .amount span { color: var(--ink-soft); font-size: 0.9rem; }
+  .plan .for { color: var(--ink-soft); font-size: 0.95rem; }
+  .plan ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; font-size: 0.95rem; align-content: start; }
+  .plan li { display: grid; grid-template-columns: 18px 1fr; gap: 8px; }
+  .plan li::before { content: ""; width: 12px; height: 8px; margin-top: 7px; background: var(--vault); border-radius: 1px; box-shadow: inset 0 -3px 0 var(--mark); }
+  .plan .btn { justify-content: center; }
+  .plan .btn.soon { opacity: .55; cursor: default; }
+  .pay-note { display: flex; align-items: center; gap: 8px; color: var(--ink-soft); font-size: 0.88rem; }
+  .fineprint { color: var(--ink-soft); font-size: 0.88rem; max-width: 75ch; }
+
+  /* FAQ */
+  .faq { display: grid; gap: 0; max-width: 780px; }
+  details { border-bottom: 1px solid var(--line); padding-block: 18px; }
+  summary { cursor: pointer; font: 700 1.05rem/1.4 var(--font-display); list-style: none; display: flex; justify-content: space-between; gap: 16px; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "+"; font-family: var(--font-mono); color: var(--ink-soft); }
+  details[open] summary::after { content: "–"; }
+  details p { color: var(--ink-soft); margin-top: 10px; max-width: 68ch; }
+
+  footer { border-top: 1px solid var(--line); padding-block: 32px 48px; display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; color: var(--ink-soft); font-size: 0.88rem; }
+
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; gap: 32px; }
+    .types { grid-template-columns: repeat(2, 1fr); }
+    .plans, .steps { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 520px) {
+    .types { grid-template-columns: 1fr; }
+    nav ul { gap: 16px; font-size: 0.92rem; }
+    section { padding-block: 56px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <nav aria-label="Hoofdmenu">
+    <a class="logo" href="#top"><i aria-hidden="true"></i>SafeBookkeeping</a>
+    <ul>
+      <li><a href="#hoe">Hoe het werkt</a></li>
+      <li><a href="#afgeschermd">Wat blijft lokaal</a></li>
+      <li><a href="#prijzen">Prijzen</a></li>
+      <li><a href="#vragen">Vragen</a></li>
+    </ul>
+  </nav>
+
+  <header class="hero" id="top">
+    <div class="text">
+      <span class="eyebrow">Desktop-app voor macOS en Windows</span>
+      <h1>AI voor je boekhouding, zonder je <span class="bar">IBAN</span> weg te geven.</h1>
+      <p class="lede">SafeBookkeeping haalt IBAN's, BSN's, e-mailadressen en telefoonnummers uit je facturen voordat ze naar ChatGPT of Claude gaan. Het antwoord krijg je terug met de echte gegevens erin, hersteld op je eigen computer.</p>
+      <div class="cta">
+        <a class="btn primary" href="#prijzen">Bekijk prijzen</a>
+        <a class="btn ghost" href="#hoe">Zo werkt het</a>
+      </div>
+      <p class="note">Werkt met je eigen API-key van OpenAI of Anthropic.</p>
+    </div>
+
+    <div class="doc" id="demo" data-view="local" aria-label="Voorbeeld van een factuur">
+      <div class="doc-head">
+        <span class="eyebrow">Voorbeeldfactuur</span>
+        <div class="toggle" role="group" aria-label="Weergave">
+          <button type="button" id="viewLocal" aria-pressed="true">Op je computer</button>
+          <button type="button" id="viewCloud" aria-pressed="false">Naar de AI</button>
+        </div>
+      </div>
+      <pre id="demoText"></pre>
+      <div class="doc-foot" id="demoFoot"></div>
+    </div>
+  </header>
+
+  <section id="hoe" aria-labelledby="hoe-t">
+    <div style="display:grid;gap:12px">
+      <span class="eyebrow">Hoe het werkt</span>
+      <h2 id="hoe-t">Drie stappen, waarvan twee op je eigen computer.</h2>
+    </div>
+    <ol class="steps">
+      <li>
+        <h3>Lokaal afschermen</h3>
+        <p>Je plakt een factuur of bankafschrift in de app. Gevoelige gegevens worden vervangen door labels zoals [IBAN_1] en [BSN_1]. De echte waarden blijven in het geheugen van je computer.</p>
+      </li>
+      <li>
+        <h3>Alleen labels naar de AI</h3>
+        <p>De afgeschermde tekst gaat met jouw eigen API-key rechtstreeks naar OpenAI of Anthropic. Er zit geen server van ons tussen.</p>
+      </li>
+      <li>
+        <h3>Lokaal herstellen</h3>
+        <p>Het antwoord, bijvoorbeeld een boekingsvoorstel met btw-splitsing, komt terug. De labels worden op je computer weer vervangen door de echte gegevens.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section id="afgeschermd" aria-labelledby="af-t">
+    <div style="display:grid;gap:12px">
+      <span class="eyebrow">Wat blijft lokaal</span>
+      <h2 id="af-t">Vier soorten gegevens komen nooit bij de AI.</h2>
+    </div>
+    <div class="types">
+      <div class="type"><h3>IBAN</h3><code>NL91 ABNA 0417 1643 00</code><span class="ph">[IBAN_1]</span><p>Nederlandse rekeningnummers, met of zonder spaties.</p></div>
+      <div class="type"><h3>BSN</h3><code>1112.22.333</code><span class="ph">[BSN_1]</span><p>Elk los getal van 9 cijfers, ook in de notatie met punten.</p></div>
+      <div class="type"><h3>E-mail</h3><code>p.devries@example.com</code><span class="ph">[EMAIL_1]</span><p>Alle e-mailadressen in het document.</p></div>
+      <div class="type"><h3>Telefoon</h3><code>+31 20 123 4567</code><span class="ph">[PHONE_1]</span><p>06-nummers, vaste nummers en +31 of 0031.</p></div>
+    </div>
+    <p class="limits"><strong>Wat de app niet afschermt:</strong> namen, adressen en bedragen. Die gaan wel mee naar de AI, omdat het model ze nodig heeft om een factuur te begrijpen. Met "Alleen anonimiseren" zie je vooraf precies wat er verstuurd wordt.</p>
+  </section>
+
+  <section id="prijzen" aria-labelledby="pr-t">
+    <div class="price-head">
+      <div style="display:grid;gap:12px">
+        <span class="eyebrow">Prijzen</span>
+        <h2 id="pr-t">Eén vaste prijs voor de app. API-kosten betaal je zelf.</h2>
+      </div>
+      <div class="billing" role="group" aria-label="Betaalperiode">
+        <button type="button" id="billMonth" aria-pressed="true">Per maand</button>
+        <button type="button" id="billYear" aria-pressed="false">Per jaar <small>2 maanden gratis</small></button>
+      </div>
+    </div>
+    <div class="plans" id="plans"></div>
+    <p class="pay-note">Veilig afrekenen via Stripe met iDEAL, creditcard of SEPA-incasso. Maandelijks opzegbaar.</p>
+    <p class="fineprint">Alle prijzen zijn exclusief 21% btw. Je API-gebruik reken je rechtstreeks af met OpenAI of Anthropic. Voor één factuur is dat meestal een paar cent, afhankelijk van het model en de lengte.</p>
+  </section>
+
+  <section id="vragen" aria-labelledby="fq-t">
+    <div style="display:grid;gap:12px">
+      <span class="eyebrow">Vragen</span>
+      <h2 id="fq-t">Veelgestelde vragen</h2>
+    </div>
+    <div class="faq">
+      <details>
+        <summary>Waar wordt mijn API-key bewaard?</summary>
+        <p>Nergens. Je typt de key in de app en hij wordt alleen gebruikt voor dat ene verzoek aan OpenAI of Anthropic. De app slaat hem niet op en stuurt hem niet naar ons.</p>
+      </details>
+      <details>
+        <summary>Ziet SafeBookkeeping mijn documenten?</summary>
+        <p>Nee. Er is geen server van SafeBookkeeping. Het afschermen en herstellen gebeurt op je eigen computer en de afgeschermde tekst gaat rechtstreeks naar de AI-aanbieder die jij kiest.</p>
+      </details>
+      <details>
+        <summary>Welke AI-modellen kan ik gebruiken?</summary>
+        <p>Elk chatmodel van OpenAI (bijvoorbeeld GPT-4o) en van Anthropic (Claude). Je vult zelf de modelnaam in, dus nieuwe modellen werken meteen.</p>
+      </details>
+      <details>
+        <summary>Is de app daarmee AVG-proof?</summary>
+        <p>De app verkleint wat er naar de AI gaat, maar namen en adressen blijven in de tekst staan. Of je verwerking aan de AVG voldoet, hangt ook af van je afspraken met de AI-aanbieder. Overleg bij twijfel met je adviseur.</p>
+      </details>
+      <details>
+        <summary>Kan ik eerst zien wat er verstuurd wordt?</summary>
+        <p>Ja. Met de knop "Alleen anonimiseren" zie je de afgeschermde tekst zonder dat er iets naar de AI gaat.</p>
+      </details>
+    </div>
+  </section>
+
+  <footer>
+    <span>SafeBookkeeping · Local-first AI voor je administratie</span>
+    <span>Prijzen excl. btw</span>
+  </footer>
+</div>
+
+<script>
+  // Stripe Payment Links (Stripe Dashboard → Payment Links → New). Plak hier per pakket en periode de link
+  // (begint met https://buy.stripe.com/). Lege links tonen "Binnenkort beschikbaar".
+  const STRIPE_LINKS = {
+    zzp:     { month: 'https://buy.stripe.com/aFa4gA1m9dj7ahGa359bO00', year: 'https://buy.stripe.com/bJe5kE1m9gvj75u3EH9bO02' },
+    kantoor: { month: 'https://buy.stripe.com/6oU5kE7Kxa6VblK7UX9bO01', year: 'https://buy.stripe.com/fZu00k1m92Et61qdfh9bO03' }
+  };
+  // Downloadlink voor het gratis pakket (bijv. een GitHub Release met de .dmg en .exe).
+  const DOWNLOAD_URL = 'https://github.com/moussaonline/SafeBookkeeping/releases/latest';
+
+  // Prijzen en pakketten op één plek, zodat ze makkelijk aan te passen zijn.
+  const PLANS = [
+    {
+      id: 'gratis', name: 'Gratis', tag: 'Om te proberen', month: 0, year: 0,
+      for: 'Voor wie wil zien wat er precies naar de AI gaat.',
+      features: ['25 documenten per maand', 'OpenAI en Claude', 'Preview zonder te versturen', '1 computer'],
+      cta: 'Gratis starten'
+    },
+    {
+      id: 'zzp', name: 'ZZP', tag: 'Meest gekozen', month: 9, year: 90, featured: true,
+      for: 'Voor zelfstandigen die hun eigen administratie doen.',
+      features: ['Onbeperkt documenten', 'OpenAI en Claude', 'Preview zonder te versturen', 'Tot 2 computers', 'Updates inbegrepen'],
+      cta: 'Kies ZZP'
+    },
+    {
+      id: 'kantoor', name: 'Kantoor', tag: 'Voor boekhouders', month: 29, year: 290,
+      for: 'Voor administratiekantoren die met klantdossiers werken.',
+      features: ['Onbeperkt documenten', '5 gebruikers', 'Extra gebruiker €5 per maand', 'Hulp bij installatie', 'Updates inbegrepen'],
+      cta: 'Kies Kantoor'
+    }
+  ];
+
+  const euro = (n) => n === 0 ? '€0' : '€' + n.toLocaleString('nl-NL');
+  let yearly = false;
+
+  function planButton(p) {
+    const url = p.id === 'gratis' ? DOWNLOAD_URL : (STRIPE_LINKS[p.id] || {})[yearly ? 'year' : 'month'];
+    const cls = `btn ${p.featured ? 'primary' : 'ghost'}`;
+    if (!url || !url.startsWith('https://')) {
+      return `<span class="${cls} soon" aria-disabled="true">Binnenkort beschikbaar</span>`;
+    }
+    const label = p.id === 'gratis' ? p.cta : `${p.cta} · ${yearly ? 'jaarlijks' : 'maandelijks'}`;
+    return `<a class="${cls}" href="${url}" target="_blank" rel="noopener">${label}</a>`;
+  }
+
+  function renderPlans() {
+    document.getElementById('plans').innerHTML = PLANS.map((p) => {
+      const amount = yearly ? p.year : p.month;
+      const unit = p.month === 0 ? 'altijd' : (yearly ? 'per jaar' : 'per maand');
+      return `<article class="plan${p.featured ? ' featured' : ''}">
+        <span class="tag">${p.tag}</span>
+        <h3>${p.name}</h3>
+        <div class="amount"><strong>${euro(amount)}</strong><span>${unit}</span></div>
+        <div style="display:grid;gap:16px;align-content:start">
+          <p class="for">${p.for}</p>
+          <ul>${p.features.map((f) => `<li>${f}</li>`).join('')}</ul>
+        </div>
+        ${planButton(p)}
+      </article>`;
+    }).join('');
+  }
+
+  function setBilling(y) {
+    yearly = y;
+    document.getElementById('billMonth').setAttribute('aria-pressed', String(!y));
+    document.getElementById('billYear').setAttribute('aria-pressed', String(y));
+    renderPlans();
+  }
+  document.getElementById('billMonth').addEventListener('click', () => setBilling(false));
+  document.getElementById('billYear').addEventListener('click', () => setBilling(true));
+  renderPlans();
+
+  // Demo: dezelfde factuur, lokaal of zoals de AI hem ziet.
+  const DEMO = [
+    'FACTUUR 2026-0142\n',
+    'Van: Jansen Installatietechniek\n',
+    '     ', ['info@jansen-installatie.nl', '[EMAIL_1]'], ' · ', ['06-12345678', '[PHONE_1]'], '\n',
+    'Aan: P. de Vries, BSN ', ['111222333', '[BSN_1]'], '\n\n',
+    'Vervanging cv-ketel + arbeid    € 1.000,00\n',
+    'Btw 21%                         €   210,00\n',
+    'Totaal                          € 1.210,00\n\n',
+    'Betalen op ', ['NL91 ABNA 0417 1643 00', '[IBAN_1]'], '\n',
+    'binnen 14 dagen.'
+  ];
+  const escapeHtml = (s) => s.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+
+  function setView(cloud) {
+    const doc = document.getElementById('demo');
+    doc.dataset.view = cloud ? 'cloud' : 'local';
+    document.getElementById('viewLocal').setAttribute('aria-pressed', String(!cloud));
+    document.getElementById('viewCloud').setAttribute('aria-pressed', String(cloud));
+    document.getElementById('demoText').innerHTML = DEMO.map((part) =>
+      Array.isArray(part) ? `<span class="pii">${escapeHtml(cloud ? part[1] : part[0])}</span>` : escapeHtml(part)
+    ).join('');
+    document.getElementById('demoFoot').innerHTML = cloud
+      ? 'Dit leest de AI. <b>4 waarden</b> zijn vervangen door labels.'
+      : 'Dit staat op je computer. Tik op "Naar de AI" om te zien wat er verstuurd wordt.';
+  }
+  document.getElementById('viewLocal').addEventListener('click', () => setView(false));
+  document.getElementById('viewCloud').addEventListener('click', () => setView(true));
+  setView(false);
+</script>
+</body>
+</html>
