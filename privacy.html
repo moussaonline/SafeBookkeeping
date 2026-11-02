@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacyverklaring · SafeBookkeeping</title>
+<meta name="description" content="Privacyverklaring van de SafeBookkeeping-app en de browserextensie SafeBookkeeping voor ChatGPT.">
+<style>
+  :root { --paper: #f5f7f9; --surface: #ffffff; --ink: #0e1c2b; --ink-soft: #4a5a6b; --line: #d5dde5; --safe: #13795b; }
+  @media (prefers-color-scheme: dark) {
+    :root { --paper: #0b141d; --surface: #111e2b; --ink: #e6edf3; --ink-soft: #9aabbc; --line: #23364a; --safe: #4fd1a5; color-scheme: dark; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--paper); color: var(--ink); font: 16px/1.65 "Segoe UI", system-ui, -apple-system, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 40px 16px 64px; }
+  h1 { font-size: 30px; line-height: 1.2; margin: 0 0 6px; }
+  h2 { font-size: 20px; margin: 36px 0 8px; }
+  h3 { font-size: 16px; margin: 22px 0 6px; }
+  p, li { color: var(--ink-soft); }
+  strong { color: var(--ink); }
+  ul { padding-left: 20px; }
+  .meta { font-size: 14px; color: var(--ink-soft); margin: 0 0 24px; }
+  .box { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+  a { color: var(--safe); }
+  code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Privacyverklaring</h1>
+  <p class="meta">SafeBookkeeping-app en browserextensie "SafeBookkeeping voor ChatGPT" · Laatst bijgewerkt: 2 november 2026</p>
+
+  <div class="box">
+    <p><strong>Kort gezegd:</strong> SafeBookkeeping is gemaakt om je gegevens bij je te houden. Het afschermen en herstellen van IBAN's, BSN's, e-mailadressen en telefoonnummers gebeurt op je eigen computer. Wij ontvangen je documenten, berichten en de echte gegevens daarin nooit.</p>
+  </div>
+
+  <h2>Wie zijn wij</h2>
+  <p>SafeBookkeeping is een product van <strong>Moes Service</strong>, ingeschreven bij de Kamer van Koophandel onder nummer 89891341. Vragen over privacy stuur je naar <a href="mailto:info@moesservice.nl">info@moesservice.nl</a>.</p>
+
+  <h2>Browserextensie "SafeBookkeeping voor ChatGPT"</h2>
+  <h3>Wat de extensie doet</h3>
+  <p>De extensie werkt alleen op chatgpt.com en chat.openai.com. Vlak voordat je een bericht verstuurt, vervangt hij IBAN's, BSN's, e-mailadressen en telefoonnummers door codes zoals <code>[IBAN_1]</code>. In de antwoorden op je scherm zet hij de echte gegevens terug.</p>
+  <h3>Welke gegevens en waar</h3>
+  <ul>
+    <li><strong>De koppeling tussen codes en echte gegevens</strong> wordt alleen in het geheugen van je browser bewaard (<code>chrome.storage.session</code>). Die wordt gewist zodra je de browser sluit, of eerder als je in de extensie op "Wis afgeschermde gegevens" klikt.</li>
+    <li><strong>De aan/uit-instelling</strong> wordt in je browser bewaard (<code>chrome.storage.local</code>).</li>
+    <li>De extensie <strong>stuurt geen gegevens naar ons of naar derden</strong>, heeft geen eigen server, gebruikt geen analyse- of trackingsoftware en laadt geen code van internet.</li>
+  </ul>
+  <h3>Wat ChatGPT ontvangt</h3>
+  <p>Je bericht gaat zoals altijd naar OpenAI, maar met codes in plaats van de afgeschermde gegevens. Namen, adressen, bedragen en andere tekst gaan wel mee. Bijlagen zoals pdf's en foto's worden niet afgeschermd. Voor wat OpenAI met je berichten doet, geldt het privacybeleid van OpenAI.</p>
+
+  <h2>SafeBookkeeping-app (Mac en Windows)</h2>
+  <h3>Je documenten</h3>
+  <p>Documenten die je in de app plakt of toevoegt, worden op je computer gelezen en afgeschermd. De afgeschermde tekst gaat rechtstreeks naar de AI-aanbieder die jij kiest (OpenAI of Anthropic), met je eigen API-key of je eigen ChatGPT-inlog. Bij de kopieer/plak-optie plak je de tekst zelf. Wij ontvangen je documenten niet.</p>
+  <h3>API-keys en inlog</h3>
+  <ul>
+    <li>Een API-key die je intypt wordt niet opgeslagen en alleen gebruikt voor dat ene verzoek aan de AI-aanbieder.</li>
+    <li>Als je inlogt met ChatGPT, wordt die inlog versleuteld op je eigen computer bewaard. Je kunt hem altijd verwijderen met "Uitloggen".</li>
+  </ul>
+  <h3>Licentie</h3>
+  <p>Bij een betaald pakket controleert de app je licentie via onze licentieserver. Daarbij worden je licentiecode en een anonieme code van je computer verstuurd (een afgeleide waarde, geen naam of serienummer). Die code bewaren we bij je abonnement om het aantal computers per pakket te tellen. Het aantal gratis documenten per maand wordt alleen op je eigen computer bijgehouden.</p>
+  <h3>Betalen</h3>
+  <p>Betalingen lopen via Stripe. Stripe verwerkt je betaal- en factuurgegevens volgens het eigen privacybeleid van Stripe. Wij zien in Stripe je abonnement en de gegevens die nodig zijn voor de factuur.</p>
+  <h3>Updates</h3>
+  <p>De app kijkt bij het opstarten op de openbare GitHub-pagina van SafeBookkeeping of er een nieuwe versie is. Daarbij wordt niets over jou of je documenten meegestuurd. GitHub kan zoals elke website je IP-adres zien.</p>
+
+  <h2>Bewaartermijnen</h2>
+  <p>Gegevens van je abonnement en licentie bewaren we zolang je abonnement loopt en daarna zolang de wet dat voor de administratie verplicht. Gegevens in de extensie verdwijnen bij het sluiten van je browser.</p>
+
+  <h2>Je rechten</h2>
+  <p>Je kunt ons vragen welke gegevens we van je hebben, en die laten verbeteren of verwijderen. Stuur daarvoor een e-mail naar <a href="mailto:info@moesservice.nl">info@moesservice.nl</a>. Je kunt ook een klacht indienen bij de Autoriteit Persoonsgegevens.</p>
+
+  <h2>Wijzigingen</h2>
+  <p>Als we deze verklaring aanpassen, zetten we de nieuwe versie op deze pagina met een nieuwe datum.</p>
+
+  <p><a href="./">← Terug naar SafeBookkeeping</a></p>
+</main>
+</body>
+</html>
